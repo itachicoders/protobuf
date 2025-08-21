@@ -1,7 +1,6 @@
 name: Build Protobuf Android (static libs for all ABI)
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
@@ -52,13 +51,18 @@ jobs:
           cd protobuf/build-${{ matrix.abi }}
           ninja
 
+      - name: Prepare artifact folder
+        run: |
+          mkdir -p out/lib
+          mkdir -p out/include
+          cp protobuf/build-${{ matrix.abi }}/**/libprotobuf.a out/lib/
+          cp -r protobuf/src/google/protobuf out/include/
+
       - name: Upload artifact (${{ matrix.abi }})
         uses: actions/upload-artifact@v4
         with:
           name: libprotobuf-${{ matrix.abi }}
-          path: |
-            protobuf/build-${{ matrix.abi }}/**/libprotobuf.a
-            protobuf/src/google/protobuf/**/*.h
+          path: out/
 
   package:
     runs-on: ubuntu-latest
@@ -74,9 +78,8 @@ jobs:
           mkdir -p protobuf-android-libs/include
           mkdir -p protobuf-android-libs/libs
 
-          # копируем заголовки (берём из любого ABI, они одинаковые)
-          cp -r artifacts/libprotobuf-arm64-v8a/protobuf/src/google/protobuf \
-             protobuf-android-libs/include/
+          # копируем заголовки (из любого ABI, они одинаковые)
+          cp -r artifacts/libprotobuf-arm64-v8a/include/* protobuf-android-libs/include/
 
           # копируем статические библиотеки по ABI
           mkdir -p protobuf-android-libs/libs/armeabi-v7a
@@ -84,10 +87,10 @@ jobs:
           mkdir -p protobuf-android-libs/libs/x86
           mkdir -p protobuf-android-libs/libs/x86_64
 
-          cp artifacts/libprotobuf-armeabi-v7a/**/libprotobuf.a protobuf-android-libs/libs/armeabi-v7a/
-          cp artifacts/libprotobuf-arm64-v8a/**/libprotobuf.a protobuf-android-libs/libs/arm64-v8a/
-          cp artifacts/libprotobuf-x86/**/libprotobuf.a protobuf-android-libs/libs/x86/
-          cp artifacts/libprotobuf-x86_64/**/libprotobuf.a protobuf-android-libs/libs/x86_64/
+          cp artifacts/libprotobuf-armeabi-v7a/lib/libprotobuf.a protobuf-android-libs/libs/armeabi-v7a/
+          cp artifacts/libprotobuf-arm64-v8a/lib/libprotobuf.a protobuf-android-libs/libs/arm64-v8a/
+          cp artifacts/libprotobuf-x86/lib/libprotobuf.a protobuf-android-libs/libs/x86/
+          cp artifacts/libprotobuf-x86_64/lib/libprotobuf.a protobuf-android-libs/libs/x86_64/
 
       - name: Create zip archive
         run: zip -r protobuf-android-libs.zip protobuf-android-libs
