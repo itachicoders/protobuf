@@ -1,45 +1,63 @@
 name: Build Protobuf + Android
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
 
 jobs:
-  build-protobuf:
+  build-protoc:
     runs-on: ubuntu-latest
     outputs:
       protoc-path: ${{ steps.install.outputs.protoc_path }}
+
     steps:
-      - uses: actions/checkout@v4
-        with: { repository: protocolbuffers/protobuf }
-      - id: cache-protobuf
+      - name: Checkout protobuf source
+        uses: actions/checkout@v4
+        with:
+          repository: protocolbuffers/protobuf
+          path: protobuf   # <-- кладём в подпапку
+
+      - name: Cache protobuf build
+        id: cache-protobuf
         uses: actions/cache@v3
         with:
           path: protobuf
           key: ${{ runner.os }}-protobuf-${{ hashFiles('protobuf/**') }}
-      - name: Build protoc if needed
+
+      - name: Build protoc (if cache miss)
         if: steps.cache-protobuf.outputs.cache-hit != 'true'
         run: |
           cd protobuf
           git submodule update --init --recursive
           ./autogen.sh
-          ./autogen.sh
           ./configure
           make -j$(nproc)
           sudo make install
           sudo ldconfig
-      - id: install
+
+      - name: Set protoc path
+        id: install
         run: echo "protoc_path=$(which protoc)" >> $GITHUB_OUTPUT
 
   build-android:
-    needs: build-protobuf
+    needs: build-protoc
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-        # ваш Android проект
-      - uses: actions/setup-java@v3
+      - name: Checkout Android project
+        uses: actions/checkout@v4
+        # если Android проект в отдельном репозитории —
+        # укажите его здесь через with: repository + path
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
         with:
           distribution: zulu
           java-version: '11'
-      - name: Build with Gradle
+
+      - name: Build Android library
         env:
-          PROTOC: ${{ needs.build-protobuf.outputs.protoc-path }}
+          PROTOC: ${{ needs.build-protoc.outputs.protoc-path }}
         run: ./gradlew clean build
