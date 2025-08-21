@@ -1,10 +1,10 @@
-name: Build Protobuf Android (static libs for all ABI)
+name: Build Protobuf Android (static libs)
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -57,19 +57,19 @@ jobs:
           mkdir -p out/lib
           mkdir -p out/include
           cp protobuf/build-${{ matrix.abi }}/**/libprotobuf.a out/lib/
-          cp -r protobuf/src/google/protobuf out/include/
+          cp -r protobuf/src/* out/include/
 
-      - name: Upload artifact (${{ matrix.abi }})
+      - name: Upload per-ABI artifact
         uses: actions/upload-artifact@v4
         with:
           name: libprotobuf-${{ matrix.abi }}
-          path: out/
+          path: out
 
   package:
     runs-on: ubuntu-latest
     needs: build-android
     steps:
-      - name: Download all artifacts
+      - name: Download all ABI artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -79,10 +79,10 @@ jobs:
           mkdir -p protobuf-android-libs/include
           mkdir -p protobuf-android-libs/libs
 
-          # копируем заголовки (из любого ABI, они одинаковые)
+          # копируем include (берём из arm64-v8a, он одинаковый для всех)
           cp -r artifacts/libprotobuf-arm64-v8a/include/* protobuf-android-libs/include/
 
-          # копируем статические библиотеки по ABI
+          # копируем либы по ABI
           mkdir -p protobuf-android-libs/libs/armeabi-v7a
           mkdir -p protobuf-android-libs/libs/arm64-v8a
           mkdir -p protobuf-android-libs/libs/x86
@@ -94,9 +94,10 @@ jobs:
           cp artifacts/libprotobuf-x86_64/lib/libprotobuf.a protobuf-android-libs/libs/x86_64/
 
       - name: Create zip archive
-        run: zip -r protobuf-android-libs.zip protobuf-android-libs
+        run: |
+          zip -r protobuf-android-libs.zip protobuf-android-libs
 
-      - name: Upload final package
+      - name: Upload final archive
         uses: actions/upload-artifact@v4
         with:
           name: protobuf-android-libs
