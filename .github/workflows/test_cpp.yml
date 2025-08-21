@@ -56,7 +56,9 @@ jobs:
         run: |
           mkdir -p out/lib
           mkdir -p out/include
-          cp protobuf/build-${{ matrix.abi }}/**/libprotobuf.a out/lib/
+          # находим libprotobuf.a
+          LIB=$(find protobuf/build-${{ matrix.abi }} -name "libprotobuf.a" | head -n 1)
+          cp "$LIB" out/lib/
           cp -r protobuf/src/* out/include/
 
       - name: Upload per-ABI artifact
