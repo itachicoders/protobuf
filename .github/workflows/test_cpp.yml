@@ -1,6 +1,7 @@
 name: Build Protobuf Android (static libs for all ABI)
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
