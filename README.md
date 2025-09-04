@@ -55,15 +55,6 @@ how to install protobuf runtime for that specific language:
 | Language                             | Source                                                      |
 |--------------------------------------|-------------------------------------------------------------|
 | C++ (include C++ runtime and protoc) | [src](src)                                                  |
-| Java                                 | [java](java)                                                |
-| Python                               | [python](python)                                            |
-| Objective-C                          | [objectivec](objectivec)                                    |
-| C#                                   | [csharp](csharp)                                            |
-| JavaScript                           | [js](js)                                                    |
-| Ruby                                 | [ruby](ruby)                                                |
-| Go                                   | [protocolbuffers/protobuf-go](https://github.com/protocolbuffers/protobuf-go)|
-| PHP                                  | [php](php)                                                  |
-| Dart                                 | [dart-lang/protobuf](https://github.com/dart-lang/protobuf) |
 
 Quick Start
 -----------
